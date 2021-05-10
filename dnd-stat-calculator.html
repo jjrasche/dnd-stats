@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+
+<body>
+	<select id="rollAdjustmentSelect" multiple></select>
+	<select id="outputSelect"></select>
+	<button id="rollButton">Roll</button>
+	<label for="rollValue">Roll</label>
+	<input id="rollValue" readonly></input>
+	<label for="average">Average</label>
+	<input id="average" readonly></input>
+    <div id="chart_div" style="width: 100%; height: 50%;"></div>
+</body>
+
+<head>
+    <title>dnd stat calculator</title>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+    google.charts.load('current', { 'packages': ['corechart'] });
+    google.charts.setOnLoadCallback(drawChart);
+
+    const rollAdjustments = {
+    	"advantage": (roll) => {
+    		const secondRoll = randomRoll();
+    		return Math.max(roll, secondRoll);
+    	},
+    	"disadvantage": (roll) => {
+    		const secondRoll = randomRoll();
+    		return Math.min(roll, secondRoll);
+    	},
+    	"minimum roll 10": (roll) => (roll < 10 ? 10 : roll),
+    	"-6": (roll) => roll - 6,
+    	"-5": (roll) => roll - 5,
+       	"-4": (roll) => roll - 4,
+    	"-3": (roll) => roll - 3,
+    	"-2": (roll) => roll - 2,
+       	"-1": (roll) => roll - 1,
+    	"+1": (roll) => roll + 1,
+    	"+2": (roll) => roll + 2,
+    	"+3": (roll) => roll + 3,
+    	"+4": (roll) => roll + 4,
+    	"+5": (roll) => roll + 5,
+    	"+6": (roll) => roll + 6,
+    	"+7": (roll) => roll + 7,
+    	"+8": (roll) => roll + 8,
+    	"+9": (roll) => roll + 9,
+    	"+10": (roll) => roll + 10,
+    	"+11": (roll) => roll + 11,
+    	"+12": (roll) => roll + 12,
+    	"+13": (roll) => roll + 13,
+    	"+14": (roll) => roll + 14,
+    	"+15": (roll) => roll + 15,
+    	"+16": (roll) => roll + 16,
+    	"+17": (roll) => roll + 17,
+    	"+18": (roll) => roll + 18,
+    	"+19": (roll) => roll + 19,
+    };
+
+    const outputConverters = { 
+    	"percent": (stats, numAttempts) => {
+    		return stats.map(roll => [roll[0], roll[1]/numAttempts])
+    	},
+    	"likelihood Roll This or Higher": (stats, numAttempts) => {
+    		const percentData = outputConverters.percent(stats, numAttempts);
+    		return percentData.map((d, idx) => [d[0], percentData.slice(idx).reduce((acc, curr) => acc + curr[1], 0)])
+    	},
+    	"likelihood Roll Higher": (stats, numAttempts) => {
+    		const percentData = outputConverters.percent(stats, numAttempts);
+    		return percentData.map((d, idx) => [d[0], percentData.slice(idx+1).reduce((acc, curr) => acc + curr[1], 0)])
+    	},
+    	"likelihood Roll Higher": (stats, numAttempts) => {
+    		const percentData = outputConverters.percent(stats, numAttempts);
+    		return percentData.map((d, idx) => [d[0], percentData.slice(idx+1).reduce((acc, curr) => acc + curr[1], 0)])
+    	},
+    	"likelihood Roll Lower": (stats, numAttempts) => {
+    		const percentData = outputConverters.percent(stats, numAttempts);
+    		return percentData.reverse().map((d, idx) => [d[0], percentData.slice(idx+1).reduce((acc, curr) => acc + curr[1], 0)]).reverse()
+    	},
+    };
+    // initialization
+    getRollAdjustmentElement = () => document.querySelector("#rollAdjustmentSelect");
+    getOutputElement = () => document.querySelector("#outputSelect");
+    (() =>{
+		Object.keys(rollAdjustments).forEach(adjustment => getRollAdjustmentElement().options.add(new Option(adjustment, adjustment)));
+		Object.keys(outputConverters).forEach(converter => getOutputElement().options.add(new Option(converter, converter)));
+    })();
+
+
+    function drawChart() {
+    	// build data
+    	const stats = simulateRolls();
+    	const dataArray =[["roll", "chance"], ...stats];
+        // setup
+        var data = google.visualization.arrayToDataTable(dataArray);
+        var view = new google.visualization.DataView(data);
+        var options = {
+            bar: { groupWidth: "95%" },
+            legend: { position: "none" },
+        };
+        // create chart
+        var chart = new google.visualization.ColumnChart(document.getElementById("chart_div"));
+        chart.draw(view, options);
+    }
+
+    function simulateRolls() {
+    	const numAttempts = 500000;
+    	const stats = createEmptyRollResults();
+    	let sum = 0;
+    	for (var i = 0; i < numAttempts; i++) {
+    		let roll = randomRoll();
+    		// const adjustedRoll = (roll < 10 ? 10 : roll) + 7;
+    		const adjustedRoll = applyRollAdjustments(roll);
+    		sum += adjustedRoll;
+    		stats[adjustedRoll] += 1
+    	}
+    	document.querySelector("#average").value = (sum/numAttempts).toFixed(2);
+    	// const percentStats = outputConverters.percent(rollStats, numAttempts);
+    	// const likelihoodThisRollOrHigher = outputConverters.likelihoodThisRollOrHigher(percentStats);
+    	// return likelihoodThisRollOrHigher;
+    	return convertOutput(stats, numAttempts);
+    }
+
+    function applyRollAdjustments(roll) {
+    	const selectedAdjustment = Array.from(getRollAdjustmentElement().selectedOptions).map(opt => opt.value);
+    	selectedAdjustment.forEach(adjustment => {
+			roll = rollAdjustments[adjustment](roll)
+    	});
+    	return roll;
+    }
+
+    function convertOutput(statsObject, numAttempts) {
+    	const statsArray = Object.keys(statsObject)
+    		.map(roll => [roll, statsObject[roll]])
+    		.sort((a,b) => {
+    			return parseInt(a[0]) - parseInt(b[0])
+    		});
+    	const converter = getOutputElement().value;
+    	return outputConverters[converter](statsArray, numAttempts);
+    }
+
+    function createEmptyRollResults() {
+    	return { "-5":0, "-4":0, "-3":0, "-2":0, "-1":0, "0":0, "1":0, "2":0, "3":0, "4":0, "5":0, "6":0, "7":0, "8":0, "9":0, "10":0, "11":0, "12":0, "13":0, "14":0, "15":0, "16":0, "17":0, "18":0, "19":0, "20":0, "21":0, "22":0, "23":0, "24":0, "25":0, "26":0, "27":0, "28":0, "29":0, "30":0, "31":0, "32":0, "33":0, "34":0, "35":0, "36":0, "37":0};
+    }
+
+    function randomRoll() {
+    	return Math.floor(Math.random() * 20) + 1;
+    } 
+
+    // listeners
+	getRollAdjustmentElement().addEventListener("change", (event) => drawChart());
+	getOutputElement().addEventListener("change", (event) => drawChart());
+	getOutputElement().addEventListener("change", (event) => drawChart());
+	document.querySelector("#rollButton").addEventListener("click", (event) => {
+		const rollValue = applyRollAdjustments(randomRoll());
+		document.querySelector("#rollValue").value = rollValue;
+	});
+    </script>
+</head>
+
+<body>
+</body>
+
+</html>
