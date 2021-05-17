@@ -1,3 +1,40 @@
 .control-section {
-	margin-right: 1em;
+	padding: 1em;
+	border: .1em dashed;
+	border-radius: 3em;
 }
+
+#controls .control-section:not(:first-child) {
+	margin-top: 1em;
+}
+
+#control-section-inputs .flex-container {
+	margin-top: .25em;
+}
+
+input[type=number] {
+	max-width: 3em;
+}
+
+.flex-container {
+	display: flex;
+/*	align-items: flex-start;
+*/}
+
+.space-between {
+	justify-content: space-around;
+}
+
+.row {
+	flex-direction: row;
+}
+
+.row div:not(:first-child) {
+    margin-left: .25em;
+}
+
+.col {
+	flex-direction: column;
+}
+
+
