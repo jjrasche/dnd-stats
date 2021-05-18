@@ -2,48 +2,37 @@
 <html>
 
 <body>
-</div>
-<!--     <div id="controls" class="flex-container row space-between">
-        <div class="flex-container col control-section" style="flex: 1 1 content;">
-            <label>Pick One or More Roll Modifier</label>
-            <select id="rollAdjustmentSelect" multiple></select>
-            <div id="control-section-inputs"></div>
+    <div id="controls" class="flex-container space-between">
+        <div class="flex-responsive-section">
+            <div class="control-section round-border">
+                <label>Base Die</label>
+                <input id="base-die-input" type="number" class="number-input" value="20"></input>
+            </div>
         </div>
-        <div class="flex-container col control-section" style="flex: 1 1 content;">
-            <label>Output Formatter</label>
-            <select id="outputSelect"></select>
+        <div class="flex-responsive-section">
+            <div class="control-section round-border">
+                <label>Output Formatter</label>
+                <select id="outputSelect"></select>
+            </div>
         </div>
-        <div class="flex-container col  control-section" style="flex: 1 1 content;">
-            <button id="rollButton">Roll</button>
-            <label for="rollValue">Roll</label>
-            <input id="rollValue" readonly></input>
-            <label for="average">Average</label>
-            <input id="average" readonly></input>
-        </div>
-    </div> 
-    <div id="chart_div" style="width: 100%; height: 50%;"></div>
--->
-    <div class="flex-container col space-between">
-        <div id="controls" class="flex-container col space-between">
-            <div class="flex-container col control-section">
+        <div class="flex-responsive-section">
+            <div class="flex-container col control-section round-border">
                 <label>Pick One or More Roll Modifier</label>
                 <select id="rollAdjustmentSelect" multiple style="width: 100%"></select>
                 <div id="control-section-inputs"></div>
             </div>
-            <div class="flex-container col control-section">
-                <label>Output Formatter</label>
-                <select id="outputSelect"></select>
-            </div>
-            <div class="flex-container col  control-section">
+        </div>
+        <div class="flex-responsive-section">
+            <div class="control-section round-border">
                 <button id="rollButton">Roll</button>
                 <label for="rollValue">Roll</label>
-                <input id="rollValue" readonly></input>
+                <input id="rollValue" readonly style="max-width: 4em"></input>
                 <label for="average">Average</label>
-                <input id="average" readonly></input>
+                <input id="average" type="number" readonly style="max-width: 4em"></input>
             </div>
         </div>
-        <div id="chart_div"></div>
     </div>
+    <div id="chart_div" style="width: 100%, height:100%"></div>
 </body>
 
 <head>
@@ -51,7 +40,7 @@
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <link rel="stylesheet" href="style.css">
     <script type="text/javascript">
-    var chartsDrawnAlready = false;
+    var baseDie = 20;
     google.charts.load('current', { 'packages': ['corechart'] });
     google.charts.setOnLoadCallback(drawChart);
 
@@ -63,7 +52,8 @@
             "method": (roll) => {
                 const numDiceInputValue = getNumDiceElement()?.value;
                 const sidesInputValue = getSidesElement()?.value;
-                const dropLowestInputValue = getDropLowestElement()?.value;
+                const dropLowestInputValue = getDropLowestElement()?.checked;
+                const dropHighestInputValue = getDropHighestElement()?.checked;
                 let rolls = [];
                 if (!!numDiceInputValue) {
                     const numDice = parseInt(numDiceInputValue);
@@ -73,13 +63,17 @@
                         rolls.push(randomRoll(sides));
                     }
                 }
-                if (!!dropLowestInputValue && dropLowestInputValue == true) {
+                if (!!dropHighestInputValue && dropHighestInputValue === true) {
                     rolls.sort((a, b) => a - b).pop();
                 }
-                return roll;
+                if (!!dropLowestInputValue && dropLowestInputValue === true) {
+                    rolls.sort((a, b) => b - a).pop();
+                }
+                var ret = rolls.reduce((acc, curr) => acc += curr,roll);
+                return ret;
             },
             "UIElement": "xdy-container",
-            "UITemplate": ` <div id="xdy-container" class="flex-container row">
+            "UITemplate": ` <div id="xdy-container" class="flex-container row round-border">
                                 <div>
                                     <label for="num-dice-input"># Dice</label>
                                     <input id="num-dice-input" type="number" class="number-input"></input>
@@ -92,6 +86,10 @@
                                     <label for="drop-lowest-input">Drop Lowest</label>
                                     <input id="drop-lowest-input" type="checkbox">
                                 </div>
+                                <div>
+                                    <label for="drop-highest-input">Drop Highest</label>
+                                    <input id="drop-highest-input" type="checkbox">
+                                </div>
                             </div>`
         },
         "add to roll": {
@@ -103,7 +101,7 @@
                 return roll;
             },
             "UIElement": "add-to-roll-container",
-            "UITemplate": ` <div id="add-to-roll-container" class="flex-container row">
+            "UITemplate": ` <div id="add-to-roll-container" class="flex-container row round-border">
                                 <div>
                                     <label for="add-to-roll-input">Add To Roll</label>
                                     <input id="add-to-roll-input" type="number"></input>
@@ -134,15 +132,17 @@
         },
     };
     // initialization
+    getBaseDieElement = () => document.querySelector("#base-die-input");
     getRollAdjustmentElement = () => document.querySelector("#rollAdjustmentSelect");
     getOutputElement = () => document.querySelector("#outputSelect");
     getNumDiceElement = () => document.querySelector("#num-dice-input");
     getAddToRollElement = () => document.querySelector("#add-to-roll-input");
-    getDropLowestElement = () => document.querySelector("#sides-input");
-    getSidesElement = () => document.querySelector("#drop-lowest-input");
+    getSidesElement = () => document.querySelector("#sides-input");
+    getDropLowestElement = () => document.querySelector("#drop-lowest-input");
+    getDropHighestElement = () => document.querySelector("#drop-highest-input");
     (() =>{
         Object.keys(rollAdjustments).forEach(adjustment => {
-            var selected =  ["add # d# dice", "add to roll"].includes(adjustment) ? true : false;
+            var selected = false;//["add # d# dice", "add to roll"].includes(adjustment) ? true : false;
             getRollAdjustmentElement().options.add(new Option(adjustment, adjustment, selected, selected))
         });
         setupControlInputs();
@@ -151,7 +151,6 @@
 
 
     function drawChart() {
-        chartsDrawnAlready = true;
         // build data
         const stats = simulateRolls();
         const dataArray =[["roll", "chance"], ...stats];
@@ -168,20 +167,20 @@
     }
 
     function simulateRolls() {
-        const numAttempts = 100000;
-        const stats = createEmptyRollResults();
+        const numAttempts = 50000;
+        const stats = {};
         let sum = 0;
         for (var i = 0; i < numAttempts; i++) {
             let roll = randomRoll();
             // const adjustedRoll = (roll < 10 ? 10 : roll) + 7;
             const adjustedRoll = applyRollAdjustments(roll);
             sum += adjustedRoll;
+            if (!stats[adjustedRoll]) {
+                stats[adjustedRoll] = 0;
+            }
             stats[adjustedRoll] += 1
-        }
+        }        
         document.querySelector("#average").value = (sum/numAttempts).toFixed(2);
-        // const percentStats = outputConverters.percent(rollStats, numAttempts);
-        // const likelihoodThisRollOrHigher = outputConverters.likelihoodThisRollOrHigher(percentStats);
-        // return likelihoodThisRollOrHigher;
         return convertOutput(stats, numAttempts);
     }
 
@@ -199,15 +198,17 @@
             .sort((a,b) => {
                 return parseInt(a[0]) - parseInt(b[0])
             });
+        // add tales onto graph for perspective
+        const largestElement = parseInt(statsArray[statsArray.length - 1][0]);
+        statsArray.push([(largestElement + 1).toString(), 0]);
+        const smallestElement = parseInt(statsArray[0][0]);
+        statsArray.unshift([(smallestElement - 1).toString(), 0]);
+
         const converter = getOutputElement().value;
         return outputConverters[converter](statsArray, numAttempts);
     }
 
-    function createEmptyRollResults() {
-        return { "-5":0, "-4":0, "-3":0, "-2":0, "-1":0, "0":0, "1":0, "2":0, "3":0, "4":0, "5":0, "6":0, "7":0, "8":0, "9":0, "10":0, "11":0, "12":0, "13":0, "14":0, "15":0, "16":0, "17":0, "18":0, "19":0, "20":0, "21":0, "22":0, "23":0, "24":0, "25":0, "26":0, "27":0, "28":0, "29":0, "30":0, "31":0, "32":0, "33":0, "34":0, "35":0, "36":0, "37":0};
-    }
-
-    function randomRoll(sides = 20) {
+    function randomRoll(sides = baseDie) {
         return Math.floor(Math.random() * sides) + 1;
     } 
 
@@ -227,9 +228,27 @@
     }
 
     // listeners
-    window.addEventListener('resize', drawChart);
+    var lastResizeDate = new Date();
+    var resizeDebounce = 1000;
+    function resizeChart() {
+        if (Date.now() - +(lastResizeDate) > resizeDebounce) {
+            console.log("resize");
+            drawChart();
+            lastResizeDate = new Date();
+            setTimeout(() => {
+                console.log("wait")
+                drawChart();
+            }, resizeDebounce/2);
+        }
+    }
+
+    window.addEventListener("resize", resizeChart);
     getRollAdjustmentElement().addEventListener("change", (event) => {
         setupControlInputs();
+        drawChart();
+    });
+    getBaseDieElement().addEventListener("change", (event) => {
+        baseDie = event.currentTarget.value;
         drawChart();
     });
     getOutputElement().addEventListener("change", (event) => drawChart());

@@ -1,4 +1,4 @@
-.control-section {
+.round-border {
 	padding: 1em;
 	border: .1em dashed;
 	border-radius: 3em;
@@ -18,15 +18,13 @@ input[type=number] {
 
 .flex-container {
 	display: flex;
-/*	align-items: flex-start;
-*/}
+	flex-wrap: wrap;
+	/*align-items: flex-start;*/
+	/*flex-direction: row;*/
+}
 
 .space-between {
 	justify-content: space-around;
-}
-
-.row {
-	flex-direction: row;
 }
 
 .row div:not(:first-child) {
@@ -34,7 +32,24 @@ input[type=number] {
 }
 
 .col {
-	flex-direction: column;
+	/*flex-direction: column;*/
 }
 
-
+/* mobile */
+@media (max-width: 768px) {
+	.flex-responsive-section {
+		flex: 100%;
+	}
+}
+/* tablet */
+@media (min-width: 768px) and (max-width : 1024px) {
+	.flex-responsive-section {
+		flex: 50%;
+	}
+}
+/* monitor */ 
+@media (min-width: 1024px) {
+	.flex-responsive-section {
+		flex: 25%;
+	}
+}
