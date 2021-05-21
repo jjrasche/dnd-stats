@@ -35,21 +35,36 @@ input[type=number] {
 	/*flex-direction: column;*/
 }
 
-/* mobile */
-@media (max-width: 768px) {
-	.flex-responsive-section {
-		flex: 100%;
-	}
+
+/* touchscreen e.g. mobile */
+@media only screen and (hover: none) and (pointer: coarse){
+    .flex-responsive-section {
+        flex: 100%;
+    }
+    label {
+        font-size: 20px;
+    }
+    :not(label) {
+        font-size: 14px;
+    }
 }
-/* tablet */
-@media (min-width: 768px) and (max-width : 1024px) {
-	.flex-responsive-section {
-		flex: 50%;
+
+
+/* monitor */
+@media not screen and (hover: none) and (pointer: coarse) {
+    @media (max-width: 768px) {
+        .flex-responsive-section {
+            flex: 100%;
+        }
+    }
+    @media (min-width: 768px) and (max-width : 1024px) {
+		.flex-responsive-section {
+			flex: 50%;
+		}
 	}
-}
-/* monitor */ 
-@media (min-width: 1024px) {
-	.flex-responsive-section {
-		flex: 25%;
+    @media (min-width : 1024px) {
+		.flex-responsive-section {
+			flex: 25%;
+		}
 	}
 }

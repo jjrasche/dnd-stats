@@ -2,6 +2,7 @@
 <html>
 
 <body>
+    <p id="screen-size"></p>
     <div id="controls" class="flex-container space-between">
         <div class="flex-responsive-section">
             <div class="control-section round-border">
@@ -32,7 +33,7 @@
             </div>
         </div>
     </div>
-    <div id="chart_div" style="width: 100%, height:100%"></div>
+    <div id="chart_div" style="width: 100%; height: 100%;"></div>
 </body>
 
 <head>
@@ -201,9 +202,13 @@
         // add tales onto graph for perspective
         const largestElement = parseInt(statsArray[statsArray.length - 1][0]);
         statsArray.push([(largestElement + 1).toString(), 0]);
-        const smallestElement = parseInt(statsArray[0][0]);
-        statsArray.unshift([(smallestElement - 1).toString(), 0]);
-
+        let smallestElement = parseInt(statsArray[0][0]);
+        if (smallestElement <= 0) {
+            statsArray.unshift([(--smallestElement).toString(), 0]);
+        }
+        while(smallestElement > 0) {
+            statsArray.unshift([(--smallestElement).toString(), 0]);
+        }
         const converter = getOutputElement().value;
         return outputConverters[converter](statsArray, numAttempts);
     }
